@@ -1,18 +1,17 @@
 package com.sirgiyenko;
 
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -90,7 +89,6 @@ public class ServiceImplTest {
         final String expectedTitle = "  ";
         final Instant expectedDateIn = Instant.now();
         final BigDecimal expectedPrice = new BigDecimal(25.25);
-        final Entity expectedEntity = new Entity(expectedId, expectedTitle, expectedDateIn, expectedPrice);
 
         when(timeService.now()).thenReturn(expectedDateIn);
         when(idGenerator.nextId()).thenReturn(expectedId);
@@ -107,7 +105,6 @@ public class ServiceImplTest {
         final String expectedTitle = "ti";
         final Instant expectedDateIn = Instant.now();
         final BigDecimal expectedPrice = new BigDecimal(25.25);
-        final Entity expectedEntity = new Entity(expectedId, expectedTitle, expectedDateIn, expectedPrice);
 
         when(timeService.now()).thenReturn(expectedDateIn);
         when(idGenerator.nextId()).thenReturn(expectedId);
@@ -124,7 +121,6 @@ public class ServiceImplTest {
         final String expectedTitle = "title is longer than 20 letters";
         final Instant expectedDateIn = Instant.now();
         final BigDecimal expectedPrice = new BigDecimal(25.25);
-        final Entity expectedEntity = new Entity(expectedId, expectedTitle, expectedDateIn, expectedPrice);
 
         when(timeService.now()).thenReturn(expectedDateIn);
         when(idGenerator.nextId()).thenReturn(expectedId);
@@ -141,7 +137,6 @@ public class ServiceImplTest {
         final String expectedTitle = "phone SamsungA7";
         final Instant expectedDateIn = Instant.now();
         final BigDecimal expectedPrice = new BigDecimal(25.25);
-        final Entity expectedEntity = new Entity(expectedId, expectedTitle, expectedDateIn, expectedPrice);
 
         when(timeService.now()).thenReturn(expectedDateIn);
         when(idGenerator.nextId()).thenReturn(expectedId);
@@ -151,6 +146,58 @@ public class ServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.addNewItem(expectedTitle, expectedPrice));
     }
 
+    @DisplayName("Fail on empty price")
+    @Test
+    public void testCase7() {
+        //Given
+        final long expectedId = 10;
+        final String expectedTitle = "Item name";
+        final Instant expectedDateIn = Instant.now();
+        final BigDecimal expectedPrice = null;
 
+        when(timeService.now()).thenReturn(expectedDateIn);
+        when(idGenerator.nextId()).thenReturn(expectedId);
+
+        //When
+        assertThrows(IllegalArgumentException.class, () -> service.addNewItem(expectedTitle, expectedPrice));
+    }
+
+    @DisplayName("Fail on price lower limit")
+    @Test
+    public void testCase8() {
+        //Given
+        final long expectedId = 10;
+        final String expectedTitle = "Item name";
+        final Instant expectedDateIn = Instant.now();
+        final BigDecimal expectedPrice = new BigDecimal(14.99);
+
+        when(timeService.now()).thenReturn(expectedDateIn);
+        when(idGenerator.nextId()).thenReturn(expectedId);
+
+        //When
+        assertThrows(IllegalArgumentException.class, () -> service.addNewItem(expectedTitle, expectedPrice));
+    }
+
+    @DisplayName("Fail on price scale more than 2 decimal points")
+    @Test
+    public void testCase9() {
+        //Given
+        final long expectedId = 10;
+        final String expectedTitle = "Item name";
+        final Instant expectedDateIn = Instant.now();
+        final BigDecimal expectedPrice = new BigDecimal(20.118765);
+        final Entity expectedEntity = new Entity(expectedId, expectedTitle, expectedDateIn, expectedPrice);
+
+        when(timeService.now()).thenReturn(expectedDateIn);
+        when(idGenerator.nextId()).thenReturn(expectedId);
+
+        //When
+        service.addNewItem(expectedTitle, expectedPrice);
+
+        //Then
+        ArgumentCaptor<Entity> argument = ArgumentCaptor.forClass(Entity.class);
+        verify(mockedDao).store(argument.capture());
+        assertEquals(new BigDecimal(20.12).setScale(2, RoundingMode.HALF_UP), argument.getValue().getPrice());
+    }
 
 }
