@@ -2,10 +2,8 @@ package com.sirgiyenko;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.*;
+import java.util.*;
 
 public class ServiceImpl implements Service {
 
@@ -77,6 +75,34 @@ public class ServiceImpl implements Service {
 
     @Override
     public Map<LocalDate, BigDecimal> getStatistic() {
-        return null;
+        Map<LocalDate, BigDecimal> statMap = new HashMap();
+
+        try {
+            List<Entity> entityList = dao.findAll();
+
+            Set<LocalDate> localDates = new TreeSet<>();
+            for (Entity entity : entityList) {
+                localDates.add(LocalDateTime.ofInstant(entity.getDateIn(),
+                        ZoneId.systemDefault()).toLocalDate());
+            }
+
+            for (LocalDate date : localDates) {
+                BigDecimal averagePrice = new BigDecimal(0);
+                int counter = 0;
+                for (Entity entity : entityList) {
+                    if (LocalDateTime.ofInstant(entity.getDateIn(),
+                            ZoneId.systemDefault()).toLocalDate().equals(date)){
+                        averagePrice = averagePrice.add(entity.getPrice());
+                        counter++;
+                    }
+                }
+                statMap.put(date, averagePrice.divide(new BigDecimal(counter), 2, BigDecimal.ROUND_HALF_UP));
+            }
+        } catch (NetworkException e) {
+            e.getMessage();
+        }
+
+        return statMap;
     }
+
 }
