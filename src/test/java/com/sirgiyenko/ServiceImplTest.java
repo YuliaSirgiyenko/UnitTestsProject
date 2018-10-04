@@ -231,7 +231,7 @@ public class ServiceImplTest {
         Map<LocalDate, BigDecimal> actual = service.getStatistic();
 
         //Then
-        assertThat(actual).isEqualToComparingFieldByField(expectedStatMap);
+        assertThat(actual).isEqualTo(expectedStatMap);
     }
 
     @DisplayName("Method getStatistic - NetworkException received")
