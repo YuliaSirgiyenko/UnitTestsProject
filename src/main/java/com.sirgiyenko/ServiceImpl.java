@@ -1,9 +1,11 @@
 package com.sirgiyenko;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ServiceImpl implements Service {
 
@@ -46,10 +48,9 @@ public class ServiceImpl implements Service {
 
     private void validateTitleUniqueness(String value, String errorMessage) {
         List<Entity> entityList = dao.findAll();
-        for (Entity entity : entityList) {
-            if (entity.getTitle().equals(value)) {
-                throw new IllegalArgumentException(errorMessage);
-            }
+        if (entityList.stream()
+                .anyMatch((p) -> p.getTitle().equals(value))) {
+            throw new IllegalArgumentException(errorMessage);
         }
     }
 
@@ -80,11 +81,9 @@ public class ServiceImpl implements Service {
         try {
             List<Entity> entityList = dao.findAll();
 
-            Set<LocalDate> localDates = new TreeSet<>();
-            for (Entity entity : entityList) {
-                localDates.add(LocalDateTime.ofInstant(entity.getDateIn(),
-                        ZoneId.systemDefault()).toLocalDate());
-            }
+            Set<LocalDate> localDates = entityList.stream()
+                    .map(entity -> changeInstantToLocalDate(entity.getDateIn()))
+                    .collect(Collectors.toSet());
 
             for (LocalDate date : localDates) {
                 BigDecimal averagePrice = new BigDecimal(0);
@@ -103,6 +102,11 @@ public class ServiceImpl implements Service {
         }
 
         return statMap;
+    }
+
+    public static LocalDate changeInstantToLocalDate(Instant instant) {
+        return LocalDateTime.ofInstant(instant,
+                ZoneId.systemDefault()).toLocalDate();
     }
 
 }
