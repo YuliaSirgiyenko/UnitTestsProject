@@ -31,6 +31,7 @@ public class ServiceImpl implements Service {
         dao.store(new Entity(idGenerator.nextId(), title, timeService.now(), scalePriceTwoDecimalPoints(price)));
     } catch (NetworkException e) {
         e.getMessage();
+        System.out.println("Network exception");
     }
     }
 
@@ -99,6 +100,7 @@ public class ServiceImpl implements Service {
             }
         } catch (NetworkException e) {
             e.getMessage();
+            System.out.println("Network exception");
         }
 
         return statMap;
